@@ -1,6 +1,6 @@
-# Getting Started with Create React App
+## Submission Instructions
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Once you're finished with the take home assignment, please zip up your code and send it to us via email. Please include any relevant instructions in this README for how to start up the frontend and backend of the app you created.
 
 ## Available Scripts
 
