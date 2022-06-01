@@ -7,6 +7,8 @@ Also, make sure to check the boxes in the rubric below before you submit the ass
 ## Rubric
 Your task is to build a collaborative Youtube player called “Youtube Watch Party” that lets users watch videos together by keeping each client’s youtube player in-sync with each other.
 
+⚠️ It is **very important** that the video stays synced in the **'Late to the party'** case - many people miss this part!
+
 ### Required Functionality
 *The player must be **synced for all users at all times** no matter when they join the party*
 - [ ] **Adding/switching** the video. Any “user” should be able to add, remove, or switch a youtube video to the watch party — which is just the main page of the website, i.e `localhost:3000`
