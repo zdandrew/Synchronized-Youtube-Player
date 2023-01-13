@@ -1,24 +1,46 @@
-import React from "react";
-import { v4 as uuidv4 } from "uuid";
-import Button from "@mui/material/Button";
+import { useState } from "react";
+import {
+  Box,
+  Button,
+  createTheme,
+  CssBaseline,
+  TextField,
+  ThemeProvider,
+  Typography,
+} from "@mui/material";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import WatchSession from "./routes/WatchSession";
+import CreateSession from "./routes/CreateSession";
+import ReplaySession from "./routes/ReplaySession";
 
-// randomly generate a user ID every time you join the room
-// you don't need persistence between browser reloads or different sessions,
-// so a random ID will do to distinguish between two tabs with the Youtube Watch Party Open
-const USER_ID = uuidv4();
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+  },
+});
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>
-          Welcome to the Youtube Watch Party. Your ID for this session is{" "}
-          {USER_ID}.
-        </p>
-        <Button> Add a youtube video</Button>
-      </header>
-    </div>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <Box
+        width="100vw"
+        height="100vh"
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        gap={1}
+      >
+        <Routes>
+          <Route path="/" element={<CreateSession />} />
+          <Route path="/create" element={<CreateSession />} />
+          <Route path="/watch/:sessionId" element={<WatchSession />} />
+          <Route path="/replay/:sessionId" element={<ReplaySession />} />
+        </Routes>
+      </Box>
+    </ThemeProvider>
   );
-}
+};
 
 export default App;
