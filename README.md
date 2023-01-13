@@ -9,7 +9,7 @@ _The player must be **synced for all users at all times** no matter when they jo
 - [ ] **Creating a session**. Any user should be able to create a session to watch a given Youtube video.
 - [ ] **Joining a session**. Any user should be able to join a session created by another user using the shareable session link.
 - [ ] **Playing/pausing** the video. When a participant pauses the video, it should pause for everyone. When a participant plays the video, it should start playing for everyone.
-- [ ] **“Seek”** When someone jumps to a certain time in the video it should jump to that time for everyone.
+- [ ] **“Seek”**. When someone jumps to a certain time in the video it should jump to that time for everyone.
 - [ ] **Late to the party**... Everything should stay synced even if a user joins the watch party late (e.g. the video is already playing)
 - [ ] **Player controls.** All the player controls (e.g. play, pause, and seek) should be intuitive and behave as expected. For play, pause & seek operations you can use the built-in YouTube controls or disable the YouTube controls and build your own UI (including a slider for the seek operation)
 
