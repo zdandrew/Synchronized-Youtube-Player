@@ -12,7 +12,7 @@ We want to respect your time, so please don't spend more than 5 hours on this, e
 To run the app simply "npm i" and then "npm start"
 
 ### Problem
-Your task is to build a collaborative “Watch Party” app that lets a distributed group of users watch youtube videos together. The app should support three main pages:
+Your task is to build a collaborative “Watch Party” app that lets a distributed group of users watch youtube videos together. The frontend should be written in Typescript (we have a skeleton for you set up) and the backend should be written in Node.JS. The app should support three main pages:
 
 - `/create` **Create a new session**
     - by giving it a name and a youtube video link. After creating a session `ABC`, you should be automatically redirected to the page `/join` page for that session
