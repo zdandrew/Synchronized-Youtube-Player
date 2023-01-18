@@ -15,7 +15,7 @@ To run the app simply "npm i" and then "npm start"
 Your task is to build a collaborative “Watch Party” app that lets a distributed group of users watch youtube videos together. The frontend should be written in Typescript (we have a skeleton for you set up) and the backend should be written in Node.JS. The app should support three main pages:
 
 - `/create` **Create a new session**
-    - by giving it a name and a youtube video link. After creating a session `ABC`, you should be automatically redirected to the page `/join` page for that session
+    - by giving it a name and a youtube video link. After creating a session `ABC`, you should be automatically redirected to the page `/watch` page for that session
 - `/watch/:sessionId` **Join an existing session**
     
     *⚠️ The player must be **synced for all users at all times** no matter when they join the party*
