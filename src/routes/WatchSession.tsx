@@ -4,7 +4,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Box, Button, TextField, Tooltip } from "@mui/material";
 import LinkIcon from "@mui/icons-material/Link";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
 
 const WatchSession: React.FC = () => {
   const { sessionId } = useParams();
@@ -53,17 +52,6 @@ const WatchSession: React.FC = () => {
               sx={{ whiteSpace: "nowrap", minWidth: "max-content" }}
             >
               <LinkIcon />
-            </Button>
-          </Tooltip>
-          <Tooltip title="Replay this watch party">
-            <Button
-              onClick={() => {
-                window.open(`/replay/${sessionId}`, "_blank");
-              }}
-              variant="contained"
-              sx={{ whiteSpace: "nowrap", minWidth: "max-content" }}
-            >
-              <VideoLibraryIcon />
             </Button>
           </Tooltip>
           <Tooltip title="Create new watch party">
