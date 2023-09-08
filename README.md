@@ -21,7 +21,6 @@ Your task is to build a collaborative “Watch Party” app that lets a distribu
     *⚠️ The player must be **synced for all users at all times** no matter when they join the party*
     
     - **Playing/pausing/seek** the video. When someone plays/pauses the video or jumps to a certain time in the video, this should update for everyone in the session
-    - **Realtime** **Switching** the video. When someone switches the session to a different youtube video, this should update for everyone
     - **Late to the party**... Everything should stay synced if a user joins the session late (e.g. if the video was already playing, the new user should see it playing at the correct time)
         
 ### Assumptions
@@ -46,6 +45,31 @@ In order to sync the video, you’ll need to know when any user plays, pauses, o
 - [ ] **Player controls.** All the player controls (e.g. play, pause, and seek) should be intuitive and behave as expected. For play, pause & seek operations you can use the built-in YouTube controls or disable the YouTube controls and build your own UI (including a slider for the seek operation)
 
 🚨 **Please fill out the rubric in the README with the functionality you were able to complete**
+
+
+### Architecture Questions
+
+After building the watch party app, we would like you to answer the following questions about design decisions and tradeoffs you made while building it. Please fill them out in the README along with your submission.
+
+**How did you approach the problem? What did you choose to learn or work on first? Did any unexpected difficulties come up - if so, how did you resolve them?
+**
+
+**How did you implement seeking to different times in the video? Are there any other approaches you considered and what are the tradeoffs between them? 
+**
+
+**How do new users know what time to join the watch party? Are there any other approaches you considered and what were the tradeoffs between them? 
+**
+
+**How do you guarantee that the time that a new user joins is accurate (i.e perfectly in sync with the other users in the session) and are there any edge cases where it isn’t? Think about cases that might occur with real production traffic.
+**
+
+**Are there any other situations - i.e race conditions, edge cases - where one user can be out of sync with another? (Out of sync meaning that user A has the video playing or paused at some time, while user B has the video playing or paused at some other time.) 
+**
+
+**How would you productionize this application to a scale where it needs to be used reliably with 1M+ DAUs and 10k people connected to a single session? Think infrastructure changes, code changes & UX changes.
+**
+
+
 
 ### Help & Clarifications
 
