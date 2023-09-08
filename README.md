@@ -53,7 +53,7 @@ After building the watch party app, we would like you to answer the following qu
 
 **How did you approach the problem? What did you choose to learn or work on first? Did any unexpected difficulties come up - if so, how did you resolve them?**
 
-**How did you implement seeking to different times in the video? Are there any other approaches you considered and what are the tradeoffs between them? **
+**How did you implement seeking to different times in the video? Are there any other approaches you considered and what are the tradeoffs between them?**
 
 **How do new users know what time to join the watch party? Are there any other approaches you considered and what were the tradeoffs between them?**
 
