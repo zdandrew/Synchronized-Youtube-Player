@@ -23,7 +23,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
 
   useEffect(() => {
     console.log("Connecting socket");
-    const socket = io("http://localhost:3001");
+    const socket = io(`http://localhost:3001?sessionId=${sessionId}`);
     socketRef.current = socket;
 
     return () => {

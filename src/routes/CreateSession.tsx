@@ -22,6 +22,7 @@ const CreateSession: React.FC = () => {
         navigate(`/watch/${data.sessionId}?inputUrl=${newUrl}`);
       }
     } catch (error) {
+      alert("Failed to create session");
       console.error('Failed to create session:', error);
     }
   };
