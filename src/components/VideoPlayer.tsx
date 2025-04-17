@@ -15,7 +15,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
   const [receivedPlay, setReceivedPlay] = useState(false);
   const [receivedPause, setReceivedPause] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [pauseClicked, setPauseClicked] = useState(false);
+  // const [pauseClicked, setPauseClicked] = useState(false);
   // const [isBuffering, setIsBuffering] = useState(false);
   const player = useRef<ReactPlayer>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -38,12 +38,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
     const handleVideoState = (data: any) => {
       // debugger;
       console.log("Current states:", {hasJoined, isPlaying});
+      setReceivedPlay(false);
+      setReceivedPause(false);
       if (data.isPlaying && !isPlaying) {
         setReceivedPlay(true);
-        setIsPlaying(data.isPlaying);
+        setIsPlaying(true);
       } else if (!data.isPlaying && isPlaying) {
         setReceivedPause(true);
-        setIsPlaying(data.isPlaying);
+        setIsPlaying(false);
       }
     };
 
@@ -90,7 +92,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
       return;
     }
     // Emit the play event to the server
-    setIsPlaying(false);
+    // setIsPlaying(false);
     // debugger;
     console.log(
       "User played video at time: ",
@@ -111,8 +113,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
       setReceivedPause(false);
       return;
     }
-    setIsPlaying(true);
-    setPauseClicked(true);
+    // setIsPlaying(true);
+    // setPauseClicked(true);
     console.log(
       "User paused video at time: ",
       player.current?.getCurrentTime()

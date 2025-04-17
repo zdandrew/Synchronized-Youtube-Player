@@ -33,7 +33,7 @@ app.post('/create_session', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log(`a user connected: ${socket.id}`);
-
+  console.log("len of cache", cache.size);
   // Play video event
   socket.on("play_video", (data) => {
     console.log("received play video event");
