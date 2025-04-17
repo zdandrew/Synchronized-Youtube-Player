@@ -8,9 +8,22 @@ const CreateSession: React.FC = () => {
   const [newUrl, setNewUrl] = useState("");
 
   const createSession = async () => {
-    setNewUrl("");
     const sessionId = uuidv4();
-    navigate(`/watch/${sessionId}`);
+    try {
+      const response = await fetch('http://localhost:3001/create_session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        navigate(`/watch/${data.sessionId}?inputUrl=${newUrl}`);
+      }
+    } catch (error) {
+      console.error('Failed to create session:', error);
+    }
   };
 
   return (
