@@ -12,8 +12,9 @@ interface VideoPlayerProps {
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId }) => {
   const [hasJoined, setHasJoined] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const [receivedPlay, setReceivedPlay] = useState(false);
-  const [receivedPause, setReceivedPause] = useState(false);
+  const receivedPlayRef = useRef(false);
+  const receivedPauseRef = useRef(false);
+  const isSeekingRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   // const [pauseClicked, setPauseClicked] = useState(false);
   // const [isBuffering, setIsBuffering] = useState(false);
@@ -36,15 +37,32 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
     if (!socketRef.current) return;
     
     const handleVideoState = (data: any) => {
-      // debugger;
-      console.log("Current states:", {hasJoined, isPlaying});
-      setReceivedPlay(false);
-      setReceivedPause(false);
+      console.log("Current states:", {hasJoined, isPlaying, data});
+      
+      // Get current player time
+      const currentTime = player.current?.getCurrentTime() || 0;
+      
+      // Set a threshold (in seconds) for when to seek
+      const SEEK_THRESHOLD = 1; // Adjust this value as needed
+      
+      // Check if we need to seek based on timestamp difference
+      if (data.videoTimestamp !== undefined && Math.abs(currentTime - data.videoTimestamp) > SEEK_THRESHOLD) {
+        console.log(`Difference (${Math.abs(currentTime - data.videoTimestamp)}) > threshold, seeking to:`, data.videoTimestamp);
+        // isSeekingRef.current = true;
+        player.current?.seekTo(data.videoTimestamp);
+        // isSeekingRef.current = false;
+      } else if (data.videoTimestamp !== undefined) {
+        console.log(`Timestamp difference (${Math.abs(currentTime - data.videoTimestamp)}) within threshold, not seeking`);
+      }
+      
+      // Handle play/pause state
+      receivedPauseRef.current = false;
       if (data.isPlaying && !isPlaying) {
-        setReceivedPlay(true);
+        console.log("setting received play to true");
+        receivedPlayRef.current = true;
         setIsPlaying(true);
       } else if (!data.isPlaying && isPlaying) {
-        setReceivedPause(true);
+        receivedPauseRef.current = true;
         setIsPlaying(false);
       }
     };
@@ -60,12 +78,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
   const handleReady = () => {
     console.log("handleReady");
     setIsReady(true);
-    // setIsPlaying(true);
-    // setReceivedPlay(true);
-    // socketRef.current?.emit("catch_up", { 
-    //   timestamp: player.current?.getCurrentTime(),
-    //   sessionId: sessionId
-    // });
   };
 
   const handleEnd = () => {
@@ -87,13 +99,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
 
   const handlePlay = () => {
     console.log("in play handler");
-    if (receivedPlay) {
-      setReceivedPlay(false);
+    console.log("receivedPlay", receivedPlayRef.current);
+    if (receivedPlayRef.current) {
+      receivedPlayRef.current = false;
+      console.log("skipped play handler");
       return;
     }
-    // Emit the play event to the server
-    // setIsPlaying(false);
-    // debugger;
+    setIsPlaying(true);
     console.log(
       "User played video at time: ",
       player.current?.getCurrentTime()
@@ -109,12 +121,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
 
   const handlePause = () => {
     console.log("in pause handler");
-    if (receivedPause) {
-      setReceivedPause(false);
+    setIsPlaying(false);
+    if (receivedPauseRef.current) {
+      receivedPauseRef.current = false;
       return;
     }
-    // setIsPlaying(true);
-    // setPauseClicked(true);
     console.log(
       "User paused video at time: ",
       player.current?.getCurrentTime()
@@ -129,22 +140,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
 
   const handleBuffer = () => {
     console.log("Video buffered");
-    setReceivedPause(false);
-    setReceivedPlay(false);
+    receivedPauseRef.current = true;
     setIsPlaying(false);
     // setIsBuffering(true);
   };
 
   const handleBufferEnd = () => {
     console.log("Buffer ended");
-    setReceivedPause(false);
-    setReceivedPlay(false);
-    // Only resume if it was playing before buffering
-    socketRef.current?.emit("catch_up", { 
-      timestamp: player.current?.getCurrentTime(),
-      sessionId: sessionId
-    });
-    // setIsBuffering(false);
+    receivedPauseRef.current = false;
+    setIsPlaying(true);
   };
 
   const handleProgress = (state: {
@@ -154,6 +158,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
     loadedSeconds: number;
   }) => {
     console.log("Video progress: ", state);
+    if (state.playedSeconds > 0 && isPlaying) {
+      socketRef.current?.emit("catch_up", { 
+        timestamp: state.playedSeconds,
+        sessionId: sessionId
+      });
+    }
+    
   };
 
   const handleButtonClick = () => {

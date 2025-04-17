@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
     curObj.setPlaying(true);
     curObj.setVideoTimestamp(data.timestamp);
     curObj.setLastUpdated(Date.now());
-    io.emit("receiveVideoState", { isPlaying: true, videoTimestamp: data.timestamp });
+    io.emit("receiveVideoState", { isPlaying: true, videoTimestamp: data.timestamp, origin: "play_video" });
   });
   
   socket.on("pause_video", (data) => {
@@ -52,17 +52,26 @@ io.on('connection', (socket) => {
     curObj.setPlaying(false);
     curObj.setVideoTimestamp(data.timestamp);
     curObj.setLastUpdated(Date.now());
-    io.emit("receiveVideoState", { isPlaying: false, videoTimestamp: data.timestamp});
+    io.emit("receiveVideoState", { isPlaying: false, videoTimestamp: data.timestamp, origin: "pause_video" });
   });
 
   socket.on("catch_up", (data) => {
     console.log("received catch up event");
     console.log(data);
     const curObj = cache.get(data.sessionId);
-    if (curObj.isPlaying) {
-      io.emit("receiveVideoState", { isPlaying: true, videoTimestamp: curObj.videoTimestamp + Date.now() - curObj.lastUpdated });
+    if (curObj.isPlaying && !curObj.firstPlay) {
+      const elapsedSeconds = (Date.now() - curObj.lastUpdated) / 1000;
+      socket.emit("receiveVideoState", { 
+        isPlaying: true, 
+        videoTimestamp: curObj.videoTimestamp + elapsedSeconds 
+      });
+    } else if (curObj.firstPlay) {
+      curObj.firstPlay = false;
+      curObj.setLastUpdated(Date.now());
+      console.log("first play");
+      socket.emit("receiveVideoState", { isPlaying: true, videoTimestamp: 0 , extra: "first play"});
     } else {
-      io.emit("receiveVideoState", { isPlaying: false, videoTimestamp: curObj.videoTimestamp });
+      socket.emit("receiveVideoState", { isPlaying: false, videoTimestamp: curObj.videoTimestamp });
     }  
   });
 

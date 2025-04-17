@@ -6,6 +6,7 @@ class VideoState {
       this.videoTimestamp = 0;
       this.lastUpdated = Date.now();
       this.connectedClients = [];
+      this.firstPlay = true;
     }
     
     updateTime(time) {
