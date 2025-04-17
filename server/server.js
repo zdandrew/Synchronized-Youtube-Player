@@ -8,97 +8,119 @@ const VideoState = require('./VideoState');
 const { v4: uuidv4 } = require('uuid');
 app.use(cors());
 
+// Configure environment variables for CORS or use default
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: CLIENT_ORIGIN,
     methods: ["GET", "POST"]
   }
 });
 
-const cache = new Map();
+// Sessions cache
+const sessions = new Map();
 
 app.get('/', (req, res) => {
-  console.log('Hello console working!');
-  res.json({ message: 'Hello finally working!' });
+  res.json({ message: 'Server is running' });
 });
 
 app.post('/create_session', (req, res) => {
-  const sessionId = uuidv4();
-  const newState = new VideoState(sessionId);
-  cache.set(sessionId, newState);
-  console.log("created session", sessionId);
-  newState.printState(); 
-  res.json({ sessionId: sessionId, success: true });
+  try {
+    const sessionId = uuidv4();
+    const newState = new VideoState(sessionId);
+    sessions.set(sessionId, newState);
+    res.json({ sessionId, success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to create session' });
+  }
 });
 
 io.on('connection', (socket) => {
-  console.log(`a user connected: ${socket.id}`);
-  console.log("len of cache", cache.size);
-  
   // Get sessionId from query parameters if provided
   const sessionId = socket.handshake.query.sessionId;
   
-  if (sessionId && cache.has(sessionId)) {
-    console.log(`Client connected to session: ${sessionId}`);
+  if (sessionId && sessions.has(sessionId)) {
     socket.join(sessionId);
   }
   
   // Play video event
   socket.on("play_video", (data) => {
-    console.log("received play video event");
-    console.log(data);
-    const curObj = cache.get(data.sessionId);
-    if (curObj) {
-      curObj.setPlaying(true);
-      curObj.setVideoTimestamp(data.timestamp);
-      curObj.setLastUpdated(Date.now());
-      io.to(data.sessionId).emit("receiveVideoState", { isPlaying: true, videoTimestamp: data.timestamp, origin: "play_video" });
+    try {
+      const sessionState = sessions.get(data.sessionId);
+      if (sessionState) {
+        sessionState.setPlaying(true);
+        sessionState.setVideoTimestamp(data.timestamp);
+        sessionState.setLastUpdated(Date.now());
+        io.to(data.sessionId).emit("receiveVideoState", { 
+          isPlaying: true, 
+          videoTimestamp: data.timestamp, 
+          origin: "play_video" 
+        });
+      }
+    } catch (error) {
+      socket.emit("error", { message: "Failed to update play state" });
     }
   });
   
   socket.on("pause_video", (data) => {
-    console.log("received pause video event");
-    console.log(data);
-    const curObj = cache.get(data.sessionId);
-    if (curObj) {
-      curObj.setPlaying(false);
-      curObj.setVideoTimestamp(data.timestamp);
-      curObj.setLastUpdated(Date.now());
-      io.to(data.sessionId).emit("receiveVideoState", { isPlaying: false, videoTimestamp: data.timestamp, origin: "pause_video" });
+    try {
+      const sessionState = sessions.get(data.sessionId);
+      if (sessionState) {
+        sessionState.setPlaying(false);
+        sessionState.setVideoTimestamp(data.timestamp);
+        sessionState.setLastUpdated(Date.now());
+        io.to(data.sessionId).emit("receiveVideoState", { 
+          isPlaying: false, 
+          videoTimestamp: data.timestamp, 
+          origin: "pause_video" 
+        });
+      }
+    } catch (error) {
+      socket.emit("error", { message: "Failed to update pause state" });
     }
   });
 
   socket.on("catch_up", (data) => {
-    console.log("received catch up event");
-    console.log(data);
-    const curObj = cache.get(data.sessionId);
-    if (curObj) {
-      // Also join the room if not joined yet
-      socket.join(data.sessionId);
-      
-      if (curObj.isPlaying && !curObj.firstPlay) {
-        const elapsedSeconds = (Date.now() - curObj.lastUpdated) / 1000;
-        socket.emit("receiveVideoState", { 
-          isPlaying: true, 
-          videoTimestamp: curObj.videoTimestamp + elapsedSeconds 
-        });
-      } else if (curObj.firstPlay) {
-        curObj.firstPlay = false;
-        curObj.setLastUpdated(Date.now());
-        console.log("first play");
-        socket.emit("receiveVideoState", { isPlaying: true, videoTimestamp: 0 , extra: "first play"});
-      } else {
-        socket.emit("receiveVideoState", { isPlaying: false, videoTimestamp: curObj.videoTimestamp });
+    try {
+      const sessionState = sessions.get(data.sessionId);
+      if (sessionState) {
+        // Also join the room if not joined yet
+        socket.join(data.sessionId);
+        
+        if (sessionState.isPlaying && !sessionState.firstPlay) {
+          const elapsedSeconds = (Date.now() - sessionState.lastUpdated) / 1000;
+          socket.emit("receiveVideoState", { 
+            isPlaying: true, 
+            videoTimestamp: sessionState.videoTimestamp + elapsedSeconds 
+          });
+        } else if (sessionState.firstPlay) {
+          sessionState.firstPlay = false;
+          sessionState.setLastUpdated(Date.now());
+          socket.emit("receiveVideoState", { 
+            isPlaying: true, 
+            videoTimestamp: 0, 
+            extra: "first play"
+          });
+        } else {
+          socket.emit("receiveVideoState", { 
+            isPlaying: false, 
+            videoTimestamp: sessionState.videoTimestamp 
+          });
+        }
       }
+    } catch (error) {
+      socket.emit("error", { message: "Failed to process catch-up request" });
     }
   });
 
   // Handle disconnection
   socket.on("disconnect", () => {
-    console.log(`Socket ${socket.id} disconnected`);
+    // Optional: track client disconnections in session state
   });
 });
 
-server.listen(3001, () => {
-  console.log('listening on *:3001');
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

@@ -5,7 +5,6 @@ class VideoState {
       this.isPlaying = true;
       this.videoTimestamp = 0;
       this.lastUpdated = Date.now();
-      this.connectedClients = [];
       this.firstPlay = true;
     }
     
@@ -17,12 +16,6 @@ class VideoState {
     setPlaying(isPlaying) {
       this.isPlaying = isPlaying;
     }
-    
-    addClient(clientId) {
-      if (!this.connectedClients.includes(clientId)) {
-        this.connectedClients.push(clientId);
-      }
-    }
 
     setVideoTimestamp(timestamp) {
       this.videoTimestamp = timestamp;
@@ -30,11 +23,6 @@ class VideoState {
 
     setLastUpdated(lastUpdated) {
       this.lastUpdated = lastUpdated;
-    }
-    
-    removeClient(clientId) {
-      this.connectedClients = this.connectedClients.filter(id => id !== clientId);
-      return this.connectedClients.length;
     }
 
     printState() {
