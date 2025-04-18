@@ -23,8 +23,6 @@ const WatchSession: React.FC = () => {
       // Fallback URL if inputUrl is not provided
       setUrl("https://www.youtube.com/watch?v=NX1eKLReSpY");
     }
-
-    // if session ID doesn't exist, you'll probably want to redirect back to the home / create session page
   }, [sessionId, searchParams]);
 
   if (!!url) {

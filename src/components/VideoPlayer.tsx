@@ -14,10 +14,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
   const [isReady, setIsReady] = useState(false);
   const receivedPlayRef = useRef(false);
   const receivedPauseRef = useRef(false);
-  const isSeekingRef = useRef(false);
+  const lastSecondRef = useRef(0);
+  const isFirstPlayRef = useRef(true);
+  const isBufferingRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  // const [pauseClicked, setPauseClicked] = useState(false);
-  // const [isBuffering, setIsBuffering] = useState(false);
   const player = useRef<ReactPlayer>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -43,14 +43,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
       const currentTime = player.current?.getCurrentTime() || 0;
       
       // Set a threshold (in seconds) for when to seek
-      const SEEK_THRESHOLD = 1; // Adjust this value as needed
+      const SEEK_THRESHOLD = 2; // Adjust this value as needed
+      isFirstPlayRef.current = false;
+  
       
       // Check if we need to seek based on timestamp difference
       if (data.videoTimestamp !== undefined && Math.abs(currentTime - data.videoTimestamp) > SEEK_THRESHOLD) {
         console.log(`Difference (${Math.abs(currentTime - data.videoTimestamp)}) > threshold, seeking to:`, data.videoTimestamp);
-        // isSeekingRef.current = true;
         player.current?.seekTo(data.videoTimestamp);
-        // isSeekingRef.current = false;
       } else if (data.videoTimestamp !== undefined) {
         console.log(`Timestamp difference (${Math.abs(currentTime - data.videoTimestamp)}) within threshold, not seeking`);
       }
@@ -98,14 +98,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
   };
 
   const handlePlay = () => {
-    console.log("in play handler");
     console.log("receivedPlay", receivedPlayRef.current);
+    if (isFirstPlayRef.current) {
+      console.log("First play skipping play handler");
+      return;
+    }
     if (receivedPlayRef.current) {
       receivedPlayRef.current = false;
       console.log("skipped play handler");
       return;
     }
     setIsPlaying(true);
+    isFirstPlayRef.current = false;
     console.log(
       "User played video at time: ",
       player.current?.getCurrentTime()
@@ -121,11 +125,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
 
   const handlePause = () => {
     console.log("in pause handler");
-    setIsPlaying(false);
+    if (isFirstPlayRef.current) {
+      console.log("First play skipping pause handler");
+      return;
+    }
     if (receivedPauseRef.current) {
       receivedPauseRef.current = false;
       return;
     }
+    setIsPlaying(false);
+    isFirstPlayRef.current = false;
     console.log(
       "User paused video at time: ",
       player.current?.getCurrentTime()
@@ -141,13 +150,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
   const handleBuffer = () => {
     console.log("Video buffered");
     receivedPauseRef.current = true;
+    isBufferingRef.current = true;
     setIsPlaying(false);
-    // setIsBuffering(true);
   };
 
   const handleBufferEnd = () => {
     console.log("Buffer ended");
     receivedPauseRef.current = false;
+    isBufferingRef.current = false;
     setIsPlaying(true);
   };
 
@@ -158,13 +168,25 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls, sessionId 
     loadedSeconds: number;
   }) => {
     console.log("Video progress: ", state);
-    if (state.playedSeconds > 0 && isPlaying) {
+    if (isFirstPlayRef.current) {
+      console.log("First play skipping progress handler");
+      return;
+    }
+    if (state.playedSeconds >= 0 && isPlaying) {
+      console.log("Progress handler - catching up");
       socketRef.current?.emit("catch_up", { 
         timestamp: state.playedSeconds,
         sessionId: sessionId
       });
+    } 
+    else if (player.current && !isPlaying && !isBufferingRef.current && Math.abs(player.current.getCurrentTime() - lastSecondRef.current) > 2) {
+      console.log("Progress handler - Seeking in Pause");
+      socketRef.current?.emit("pause_video", { 
+        timestamp: player.current?.getCurrentTime(),
+        sessionId: sessionId
+      });
     }
-    
+    lastSecondRef.current = state.playedSeconds;
   };
 
   const handleButtonClick = () => {
