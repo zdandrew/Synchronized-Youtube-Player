@@ -6,7 +6,8 @@ const { Server } = require("socket.io");
 const cors = require('cors');
 const VideoState = require('./VideoState');
 const { v4: uuidv4 } = require('uuid');
-const redis = require('redis'); // Add Redis client
+const RedisSessionManager = require('./services/redisSessionManager');
+
 app.use(cors());
 
 // Configure environment variables for CORS or use default
@@ -19,64 +20,16 @@ const io = new Server(server, {
   }
 });
 
-// Connect to Redis
-const redisClient = redis.createClient({
-  url: 'redis://localhost:6379'
-});
+// Initialize Redis session manager
+const sessions = new RedisSessionManager();
 
-// Handle Redis connection events
-redisClient.on('error', (err) => console.error('Redis Error:', err));
-redisClient.on('connect', () => console.log('Connected to Redis'));
-
-// Connect to Redis (this is async)
-(async () => {
-  await redisClient.connect();
-})();
-
-// Redis-based session operations
-const sessions = {
-  async get(sessionId) {
-    const data = await redisClient.get(`session:${sessionId}`);
-    if (!data) return null;
-    
-    // Convert JSON to VideoState object
-    const sessionData = JSON.parse(data);
-    const state = new VideoState(sessionId);
-    Object.assign(state, sessionData);
-    return state;
-  },
-  
-  async set(sessionId, sessionState) {
-    await redisClient.set(`session:${sessionId}`, JSON.stringify(sessionState));
-  },
-  
-  async has(sessionId) {
-    return await redisClient.exists(`session:${sessionId}`) === 1;
-  },
-  
-  async getAll() {
-    const keys = await redisClient.keys('session:*');
-    const sessions = [];
-    
-    for (const key of keys) {
-      const sessionId = key.replace('session:', '');
-      const session = await this.get(sessionId);
-      if (session) {
-        sessions.push([sessionId, session]);
-      }
-    }
-    
-    return sessions;
-  }
-};
-
-// Broadcast state every 5 seconds to keep all clients in sync
-const BROADCAST_INTERVAL = 5000; // 5 seconds
+// Broadcast state every 8 seconds to keep all clients in sync
+const BROADCAST_INTERVAL = 8000; // 8 seconds
 
 setInterval(async () => {
   try {
     // Get all active sessions from Redis
-    const activeSessions = await sessions.getAll();
+    const activeSessions = await sessions.getAllSessions();
     
     for (const [sessionId, sessionState] of activeSessions) {
       if (sessionState.firstPlay) {
@@ -114,7 +67,7 @@ app.post('/create_session', async (req, res) => {
   try {
     const sessionId = uuidv4();
     const newState = new VideoState(sessionId);
-    await sessions.set(sessionId, newState);
+    await sessions.setSession(sessionId, newState);
     res.json({ sessionId, success: true });
   } catch (error) {
     console.error('Error creating session:', error);
@@ -129,7 +82,7 @@ io.on('connection', (socket) => {
   if (sessionId) {
     // Check if session exists and join room (async)
     (async () => {
-      if (await sessions.has(sessionId)) {
+      if (await sessions.hasSession(sessionId)) {
         socket.join(sessionId);
       }
     })();
@@ -138,14 +91,14 @@ io.on('connection', (socket) => {
   // Play video event
   socket.on("play_video", async (data) => {
     try {
-      const sessionState = await sessions.get(data.sessionId);
+      const sessionState = await sessions.getSession(data.sessionId);
       if (sessionState) {
         sessionState.setPlaying(true);
         sessionState.setVideoTimestamp(data.timestamp);
         sessionState.setLastUpdated(Date.now());
         
         // Save updated state to Redis
-        await sessions.set(data.sessionId, sessionState);
+        await sessions.setSession(data.sessionId, sessionState);
         
         io.to(data.sessionId).emit("receiveVideoState", { 
           isPlaying: true, 
@@ -161,14 +114,14 @@ io.on('connection', (socket) => {
   
   socket.on("pause_video", async (data) => {
     try {
-      const sessionState = await sessions.get(data.sessionId);
+      const sessionState = await sessions.getSession(data.sessionId);
       if (sessionState) {
         sessionState.setPlaying(false);
         sessionState.setVideoTimestamp(data.timestamp);
         sessionState.setLastUpdated(Date.now());
         
         // Save updated state to Redis
-        await sessions.set(data.sessionId, sessionState);
+        await sessions.setSession(data.sessionId, sessionState);
         
         io.to(data.sessionId).emit("receiveVideoState", { 
           isPlaying: false, 
@@ -184,7 +137,7 @@ io.on('connection', (socket) => {
 
   socket.on("catch_up", async (data) => {
     try {
-      const sessionState = await sessions.get(data.sessionId);
+      const sessionState = await sessions.getSession(data.sessionId);
       if (sessionState) {
         // Also join the room if not joined yet
         socket.join(data.sessionId);
@@ -200,7 +153,7 @@ io.on('connection', (socket) => {
           sessionState.setLastUpdated(Date.now());
           
           // Save updated state to Redis
-          await sessions.set(data.sessionId, sessionState);
+          await sessions.setSession(data.sessionId, sessionState);
           
           socket.emit("receiveVideoState", { 
             isPlaying: true, 
@@ -228,8 +181,7 @@ io.on('connection', (socket) => {
 
 // Graceful shutdown - close Redis connection
 process.on('SIGINT', async () => {
-  console.log('Closing Redis connection...');
-  await redisClient.quit();
+  await sessions.disconnect();
   process.exit(0);
 });
 
