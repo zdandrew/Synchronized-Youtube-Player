@@ -4,7 +4,11 @@
 
 ### Instructions
 
-To run the app, run "npm i" and then "npm start" for the frontend. Navigate into the "server" directory, run "npm i" and then "npm start" for the backend. Finally install Redis "brew install redis" on MacOS, and then "redis-server" to start.
+To run the app, run "npm i" and then "npm start" for the frontend. 
+
+Navigate into the "server" directory, run "npm i" and then "npm start" for the backend. 
+
+Finally install Redis "brew install redis" on MacOS, and then "redis-server" to start.
 
 ### Completed Functionality
 
