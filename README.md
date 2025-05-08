@@ -1,4 +1,4 @@
-## Nooks Watch Party Project
+## Synchronized Youtube Player
 
 
 
@@ -19,4 +19,3 @@ Finally install Redis "brew install redis" on MacOS, and then "redis-server" to 
 - [✅] **Late to the party**... Everything should stay synced even if a user joins the watch party late (e.g. the video is already playing)
 - [✅] **Player controls.** All the player controls (e.g. play, pause, and seek) should be intuitive and behave as expected. For play, pause & seek operations, I used the built-in YouTube controls.
 
-### Architecture Questions In Email
